@@ -36,13 +36,18 @@ def get_amazon_data(product_name):
                 img = product.find('img')
                 ahref = product.find('a')
                 ahref = 'https://www.amazon.in/'+ahref['href']
+                price = 'price not provided.'
+                try:
+                    price = product.find('span', class_='a-price-whole').text
+                except:
+                    pass
                 try:
                     rnr = product.find('div', class_="a-row a-size-small")
                     rating = rnr.find('span', class_='a-icon-alt').text
                     review = rnr.find('span', class_='a-size-base').text
                 except:
                     pass
-                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review}
+                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price}
         if count == 0:
             exitloop = False
         print(count, page)
@@ -60,6 +65,7 @@ def get_flipkart_data(product_name):
                 href = product.find('a', class_="Zhf2z-")['href']
                 href = 'https://www.flipkart.com'+href
                 img = product.find('img', {'class': "_1Nyybr"})  # Product Name,Image Url
+                price = product.find('div', class_="_1vC4OE").text
                 rating = 'No ratings Provided'
                 responses = 'No responses available'
                 try:
@@ -67,7 +73,7 @@ def get_flipkart_data(product_name):
                     responses = product.find('span', class_='_38sUEc').text[1:-1]
                 except:
                     pass
-                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses}
+                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price}
             print(page)
         except:
             print('exception')
@@ -76,5 +82,5 @@ def get_flipkart_data(product_name):
 
 
 if __name__ == '__main__':
-    # two functions created
-    pass
+    for data in get_flipkart_data('playstation 4'):
+        print(data)
