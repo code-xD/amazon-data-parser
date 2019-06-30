@@ -81,6 +81,53 @@ def get_flipkart_data(product_name):
         page += 1
 
 
+def get_snapdeal_data(product_name):
+    soup = get_url_data('https://www.snapdeal.com/search',
+                        {'keyword': product_name, 'sort': 'plrty'})
+    count = 1
+    total = int(soup.find('div', class_='search-result-txt-section').text.split(' ')[2])
+    while count < total:
+        soup = get_url_data('https://www.snapdeal.com/search',
+                            {'keyword': product_name, 'sort': 'plrty', 'start': count})
+        for product in soup.find_all('div', {'data-islive': 'true'}):
+            try:
+                desc = product.find('div', {'class': 'product-desc-rating'})
+                href = desc.find('a')['href']
+                product_pool = urllib3.connection_from_url(href)
+                r = product_pool.urlopen('GET', href)
+                product_soup = BeautifulSoup(r.data, 'html.parser')
+                img = product_soup.find('img', class_='cloudzoom')
+                try:
+                    price = product_soup.find('span', class_='payBlkBig').text
+                except:
+                    price = 'Price Not available'
+                rating = 'No ratings Provided'
+                responses = 'No responses available'
+                try:
+                    rating = product_soup.find('span', class_='avrg-rating').text[1:4]
+                    responses = product_soup.find(
+                        'span', {'itemprop': 'ratingCount'}).text + product_soup.find('span', {'itemprop': 'reviewCount'}).text
+                    # print(img['src'], img['title'], price, rating, responses)
+                except:
+                    pass
+                count += 1
+                yield {'Product Name': img['title'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price}
+            except:
+                count += 1
+                pass
+
+
 if __name__ == '__main__':
-    for data in get_flipkart_data('playstation 4'):
-        print(data)
+    fields = ['Product Name', 'Image URL', 'Product URL',
+              'price', 'Ratings', 'No: of Responses']
+    if not path.exists("E-commerce Data.csv"):
+        f = open("E-commerce Data.csv", "a")
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        f.close()
+    with open('E-commerce Data.csv', 'a') as csvfile:
+        for data in get_snapdeal_data('ps4'):
+            # used for parsing snapdeal
+            print('data')
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writerow(data)
