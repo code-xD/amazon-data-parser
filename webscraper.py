@@ -208,19 +208,42 @@ def get_alibaba_data(product_name):
 
 
 def get_etsy_data(product_name):
-    pass
+    exitloop = True
+    page = 1
+    while exitloop:
+        soup = get_url_data('https://www.etsy.com/in-en/search?',
+                            {'q': product_name, 'page': page})
+        try:
+            txt = soup.find('a', attrs={'data-listing-id': True}).text
+            for product in soup.find_all('a', attrs={'data-listing-id': True}):
+                href = product['href']
+                img = product.find('img')  # title,imgurl
+                rating = 'No ratings Provided'
+                responses = 'No responses available'
+                price = product.find('span', class_='currency-value').text
+                try:
+                    rnr = product.find('span', class_='v2-listing-card__rating')
+                    rating = rnr.find('input')['value']
+                    responses = rnr.find('span', class_='text-body-smaller').text[1:-1]
+                    yield {'Product Name': product['title'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'United States'}
+                except:
+                    pass
+        except:
+            exitloop = False
+        page += 1
+        print(page)
 
 
 if __name__ == '__main__':
-    # fields = ['Product Name', 'Image URL', 'Product URL',
-    #           'price', 'Ratings', 'No: of Responses', 'country']
-    # if not path.exists("E-commerce Data.csv"):
-    #     f = open("E-commerce Data.csv", "a")
-    #     writer = csv.DictWriter(f, fieldnames=fields)
-    #     writer.writeheader()
-    #     f.close()
-    # with open('E-commerce Data.csv', 'a') as csvfile:
-    #     print('data')
-    #     writer = csv.DictWriter(csvfile, fieldnames=fields)
-    #     writer.writerow(data)
-    pass
+    fields = ['Product Name', 'Image URL', 'Product URL',
+              'price', 'Ratings', 'No: of Responses', 'country']
+    if not path.exists("E-commerce Data.csv"):
+        f = open("E-commerce Data.csv", "a")
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        f.close()
+    with open('E-commerce Data.csv', 'a') as csvfile:
+        print('data')
+        writer = csv.DictWriter(csvfile, fieldnames=fields)
+        for data in get_amazon_data('ps4 vr', get_country_amazon("United Kingdom"), 'United Kingdom'):
+            writer.writerow(data)
