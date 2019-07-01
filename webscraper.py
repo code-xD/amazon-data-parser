@@ -164,16 +164,63 @@ def get_country_amazon(country):
     return url
 
 
+def get_alibaba_data(product_name):
+    page = 1
+    cont = True
+    while cont:
+        try:
+            soup = get_url_data('https://www.alibaba.com/trade/search',
+                                {'SearchText': product_name, 'page': page})
+            products = soup.find_all('div', class_='m-gallery-product-item-v2')
+            products[0].text
+            for product in products:
+                try:
+                    img = product.find('img')  # title,https:+img_url
+                    href = 'https:'+product.find('a')['href']
+                    price = product.find('div', class_='price').b.text
+                    price = price.replace(' ', '')
+                    price = price.replace('\n', '')
+                    rating = 'No ratings Provided'
+                    responses = 'No responses available'
+                    try:
+                        rating = product.find('span', class_='list-item__company-record-num').text
+                        rating = rating.replace(' ', '')
+                        rating = rating.replace('\n', '')
+                        rating = eval(rating)
+                        responses = product.find(
+                            'span', class_='li-reviews-score__review-count').text
+                        responses = responses.replace(' ', '')
+                        responses = responses.replace('\n', '')
+                        resp = ''
+                        for ch in responses:
+                            if ch.isdigit():
+                                resp += ch
+                        print(rating, resp)
+                    except:
+                        print('exception')
+                        yield {'Product Name': img['alt'], 'Image URL': 'https:'+img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'International'}
+                except:
+                    pass
+        except:
+            break
+        page += 1
+        print(page)
+
+
+def get_etsy_data(product_name):
+    pass
+
+
 if __name__ == '__main__':
-    fields = ['Product Name', 'Image URL', 'Product URL',
-              'price', 'Ratings', 'No: of Responses', 'country']
-    if not path.exists("E-commerce Data.csv"):
-        f = open("E-commerce Data.csv", "a")
-        writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writeheader()
-        f.close()
-    with open('E-commerce Data.csv', 'a') as csvfile:
-        for data in get_amazon_data('ps4', get_country_amazon('United Kingdom'), 'United Kingdom'):
-            print('data')
-            writer = csv.DictWriter(csvfile, fieldnames=fields)
-            writer.writerow(data)
+    # fields = ['Product Name', 'Image URL', 'Product URL',
+    #           'price', 'Ratings', 'No: of Responses', 'country']
+    # if not path.exists("E-commerce Data.csv"):
+    #     f = open("E-commerce Data.csv", "a")
+    #     writer = csv.DictWriter(f, fieldnames=fields)
+    #     writer.writeheader()
+    #     f.close()
+    # with open('E-commerce Data.csv', 'a') as csvfile:
+    #     print('data')
+    #     writer = csv.DictWriter(csvfile, fieldnames=fields)
+    #     writer.writerow(data)
+    pass
