@@ -14,11 +14,11 @@ def get_url_data(site_url, params):
     return soup
 
 
-def get_amazon_data(product_name):
+def get_amazon_data(product_name, site_url, country):
     exitloop = True
     page = 1
     while exitloop:
-        soup = get_url_data('https://www.amazon.in/s', {'k': product_name, 'page': page})
+        soup = get_url_data(site_url+'/s', {'k': product_name, 'page': page})
         count = 0
         for product in soup.find_all("div", {"data-asin": True}):
             sponsored = False
@@ -47,7 +47,7 @@ def get_amazon_data(product_name):
                     review = rnr.find('span', class_='a-size-base').text
                 except:
                     pass
-                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price}
+                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price, 'country': country}
         if count == 0:
             exitloop = False
         print(count, page)
@@ -73,7 +73,7 @@ def get_flipkart_data(product_name):
                     responses = product.find('span', class_='_38sUEc').text[1:-1]
                 except:
                     pass
-                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price}
+                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'India'}
             print(page)
         except:
             print('exception')
@@ -111,23 +111,46 @@ def get_snapdeal_data(product_name):
                 except:
                     pass
                 count += 1
-                yield {'Product Name': img['title'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price}
+                yield {'Product Name': img['title'], 'Image URL': img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'India'}
             except:
                 count += 1
                 pass
 
 
+def get_country_amazon(country):
+    country_dict = {
+        'China'	: 'amazon.cn',
+        'India'	: 'amazon.in',
+        'Japan'	: 'amazon.co.jp',
+        'Singapore'	: 'amazon.com.sg',
+        'Turkey'	: 'amazon.com.tr',
+        'United Arab Emirates'	: 'amazon.ae',
+        'France'	: 'amazon.fr',
+        'Germany'	: 'amazon.de',
+        'Italy'	: 'amazon.it',
+        'Netherlands':	'amazon.nl',
+        'Spain':	'amazon.es'	,
+        'United Kingdom':	'amazon.co.uk',
+        'Canada':	'amazon.ca',
+        'Mexico':	'amazon.com.mx',
+        'United States':	'amazon.com',
+        'Australia':	'amazon.com.au',
+        'Brazil':	'amazon.com.br'
+    }
+    url = 'http://'+country_dict.get(country)
+    return url
+
+
 if __name__ == '__main__':
     fields = ['Product Name', 'Image URL', 'Product URL',
-              'price', 'Ratings', 'No: of Responses']
+              'price', 'Ratings', 'No: of Responses', 'country']
     if not path.exists("E-commerce Data.csv"):
         f = open("E-commerce Data.csv", "a")
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         f.close()
     with open('E-commerce Data.csv', 'a') as csvfile:
-        for data in get_snapdeal_data('ps4'):
-            # used for parsing snapdeal
+        for data in get_amazon_data('ps4', get_country_amazon('United Kingdom'), 'United Kingdom'):
             print('data')
             writer = csv.DictWriter(csvfile, fieldnames=fields)
             writer.writerow(data)
