@@ -64,7 +64,13 @@ def get_amazon_data(product_name, site_url, country):
                     review = rnr.find('span', class_='a-size-base').text
                 except:
                     pass
-                yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price, 'country': country}
+                if len(prices) != 1:
+                    print('multi-price')
+                    for i in range(len(prices)):
+                        yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country}
+                else:
+                    yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price, 'country': country}
+
         if count == 0:
             exitloop = False
         print(count, page)
