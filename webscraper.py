@@ -17,10 +17,12 @@ def get_url_data(site_url, params):
 def get_amazon_data(product_name, site_url, country):
     exitloop = True
     page = 1
+    print('called')
     while exitloop:
         soup = get_url_data(site_url+'/s', {'k': product_name, 'page': page})
         count = 0
         for product in soup.find_all("div", {"data-asin": True}):
+            print('loop')
             sponsored = False
             for tag in product.find_all('div'):
                 try:
@@ -38,9 +40,24 @@ def get_amazon_data(product_name, site_url, country):
                 ahref = 'https://www.amazon.in/'+ahref['href']
                 price = 'price not provided.'
                 try:
-                    price = product.find('span', class_='a-price-whole').text
+                    prices = product.find_all('span', class_='a-price-whole')
+                    if len(prices) == 1:
+                        price = product.find('span', class_='a-price-whole').text
+                    else:
+                        price = []
+                        for pr in prices:
+                            pr = pr.text
+                            price.append(pr)
                 except:
-                    pass
+                    try:
+                        print('exception')
+                        price_raw = product.find_all('div', class_='sg-row')[1]
+                        price_raw = price_raw.find_all('div', class_='sg-row')[1]
+                        price_raw = price_raw.find_all('div', class_='a-section')[1]
+                        price = price = price_raw.find('span', class_='a-color-base').text[1:]
+                        print(price)
+                    except:
+                        print('uncaught')
                 try:
                     rnr = product.find('div', class_="a-row a-size-small")
                     rating = rnr.find('span', class_='a-icon-alt').text
