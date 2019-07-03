@@ -3,9 +3,12 @@ import urllib3
 import csv
 from os import path
 from bs4 import BeautifulSoup
+# from urllib3.contrib.appengine import AppEngineManager
 
 
 def get_url_data(site_url, params):
+    #     http_pool = AppEngineManager()
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     r = requests.get(site_url, params=params)
     # print(r.status_code)
     http_pool = urllib3.connection_from_url(r.url)
@@ -198,7 +201,7 @@ def get_alibaba_data(product_name):
                         print(rating, resp)
                     except:
                         print('exception')
-                    yield {'Product Name': img['alt'], 'Image URL': 'https:'+img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'International'}
+                    yield {'Product Name': img['alt'], 'Image URL': 'https:'+img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': resp, 'price': price, 'country': 'International'}
                 except:
                     pass
         except:
@@ -245,5 +248,5 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-        for data in get_alibaba_data("Wooden Clock"):
+        for data in get_etsy_data("file"):
             writer.writerow(data)
