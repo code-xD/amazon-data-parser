@@ -198,7 +198,7 @@ def get_alibaba_data(product_name):
                         print(rating, resp)
                     except:
                         print('exception')
-                        yield {'Product Name': img['alt'], 'Image URL': 'https:'+img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'International'}
+                    yield {'Product Name': img['alt'], 'Image URL': 'https:'+img['src'], 'Product URL': href, 'Ratings': rating, 'No: of Responses': responses, 'price': price, 'country': 'International'}
                 except:
                     pass
         except:
@@ -245,5 +245,5 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-        for data in get_etsy_data("file"):
+        for data in get_alibaba_data("Wooden Clock"):
             writer.writerow(data)
