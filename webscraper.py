@@ -248,5 +248,5 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-        for data in get_etsy_data("file"):
+        for data in get_amazon_data("file", get_country_amazon('United States'), 'United States'):
             writer.writerow(data)
