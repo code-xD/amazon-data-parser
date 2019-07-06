@@ -1,28 +1,49 @@
 import requests
 import urllib3
 import csv
+import time
 from os import path
 from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+from selenium import webdriver
 # from urllib3.contrib.appengine import AppEngineManager
+
+
+def get_url_data_bot(site_url, params):
+    r = requests.get(site_url, params=params)
+    driver = webdriver.Chrome()
+    driver.get(r.url)
+    with open('code.text', 'w') as file:
+        file.write(driver.page_source)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    driver.close()
+    return soup
 
 
 def get_url_data(site_url, params):
     #     http_pool = AppEngineManager()
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    ua = UserAgent()
     r = requests.get(site_url, params=params)
-    # print(r.status_code)
     http_pool = urllib3.connection_from_url(r.url)
     r = http_pool.urlopen('GET', r.url)
+    # print(r.status_code)
+    # print(r.url)
     soup = BeautifulSoup(r.data, 'html.parser')
     return soup
 
 
-def get_amazon_data(product_name, site_url, country):
+def get_amazon_data(product_name, site_url, country, category=None):
     exitloop = True
     page = 1
     print('called')
     while exitloop:
-        soup = get_url_data(site_url+'/s', {'k': product_name, 'page': page})
+        if category is None:
+            soup = get_url_data_bot(site_url+'/s', {'k': product_name, 'page': page})
+        else:
+            print('category')
+            soup = get_url_data_bot(
+                site_url+'/s', {'k': product_name, 'page': page, 'i': 'handmade'})
+            # print(soup)
         count = 0
         for product in soup.find_all("div", {"data-asin": True}):
             print('loop')
@@ -40,7 +61,7 @@ def get_amazon_data(product_name, site_url, country):
                 count += 1
                 img = product.find('img')
                 ahref = product.find('a')
-                ahref = 'https://www.amazon.in/'+ahref['href']
+                ahref = ahref['href']
                 price = 'price not provided.'
                 try:
                     prices = product.find_all('span', class_='a-price-whole')
@@ -67,12 +88,20 @@ def get_amazon_data(product_name, site_url, country):
                     review = rnr.find('span', class_='a-size-base').text
                 except:
                     pass
+                rmk = ''
+                try:
+                    remarks = product.find_all('span', class_='a-badge-text')
+                    for remark in remarks:
+                        rmk += str(remark.text)+' '
+                    print(rmk)
+                except:
+                    pass
                 if len(prices) != 1:
                     print('multi-price')
                     for i in range(len(prices)):
-                        yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country}
+                        yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': rmk}
                 else:
-                    yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price, 'country': country}
+                    yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price, 'country': country, 'remark': rmk}
 
         if count == 0:
             exitloop = False
@@ -170,10 +199,12 @@ def get_country_amazon(country):
 def get_alibaba_data(product_name):
     page = 1
     cont = True
+    print('alibaba')
     while cont:
         try:
+            print('try')
             soup = get_url_data('https://www.alibaba.com/trade/search',
-                                {'SearchText': product_name, 'page': page})
+                                {'SearchText': product_name, 'page': page, 'CatId': '1', 'fsb': 'y', 'IndexArea': 'product_en', 'viewtype': 'G'})
             products = soup.find_all('div', class_='m-gallery-product-item-v2')
             products[0].text
             for product in products:
@@ -205,6 +236,7 @@ def get_alibaba_data(product_name):
                 except:
                     pass
         except:
+            print('except')
             break
         page += 1
         print(page)
@@ -239,7 +271,7 @@ def get_etsy_data(product_name):
 
 if __name__ == '__main__':
     fields = ['Product Name', 'Image URL', 'Product URL',
-              'price', 'Ratings', 'No: of Responses', 'country']
+              'price', 'Ratings', 'No: of Responses', 'country', 'remark']
     if not path.exists("E-commerce Data.csv"):
         f = open("E-commerce Data.csv", "a")
         writer = csv.DictWriter(f, fieldnames=fields)
@@ -248,5 +280,5 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-        for data in get_amazon_data("file", get_country_amazon('United States'), 'United States'):
+        for data in get_amazon_data('file', get_country_amazon('United States'), 'United States'):
             writer.writerow(data)
