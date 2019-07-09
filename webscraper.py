@@ -7,16 +7,20 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from selenium import webdriver
 # from urllib3.contrib.appengine import AppEngineManager
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
 
 
 def get_url_data_bot(site_url, params):
     r = requests.get(site_url, params=params)
-    driver = webdriver.Chrome()
-    driver.get(r.url)
+    wd = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
+    wd.get(r.url)
     with open('code.text', 'w') as file:
-        file.write(driver.page_source)
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    driver.close()
+        file.write(wd.page_source)
+    soup = BeautifulSoup(wd.page_source, 'html.parser')
+    wd.close()
     return soup
 
 
@@ -42,7 +46,7 @@ def get_amazon_data(product_name, site_url, country, category=None):
         else:
             print('category')
             soup = get_url_data_bot(
-                site_url+'/s', {'k': product_name, 'page': page, 'i': 'handmade'})
+                site_url+'/s', {'k': product_name, 'page': page, 'i': category})
             # print(soup)
         count = 0
         for product in soup.find_all("div", {"data-asin": True}):
@@ -280,5 +284,5 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-        for data in get_amazon_data('file', get_country_amazon('United States'), 'United States'):
+        for data in get_amazon_data('gucci', get_country_amazon('United States'), 'United States', 'handmade'):
             writer.writerow(data)
