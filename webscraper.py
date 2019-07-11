@@ -15,7 +15,7 @@ chrome_options.add_argument('--disable-dev-shm-usage')
 
 def get_url_data_bot(site_url, params):
     r = requests.get(site_url, params=params)
-    wd = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
+    wd = webdriver.Chrome()
     wd.get(r.url)
     with open('code.text', 'w') as file:
         file.write(wd.page_source)
@@ -36,6 +36,31 @@ def get_url_data(site_url, params):
     return soup
 
 
+def get_amazon_price(htmlcode):
+    price = []
+    try:
+        prices = htmlcode.find_all('span', class_='a-price-whole')
+        if len(prices) == 1:
+            price.append(htmlcode.find('span', class_='a-price-whole').text)
+        else:
+            for pr in prices:
+                pr = pr.text
+                price.append(pr)
+                if pr.parent.parent['data-a-strike'] == 'true':
+                    price.pop()
+    except:
+        try:
+            print('exception')
+            price_raw = htmlcode.find_all('div', class_='sg-row')[1]
+            price_raw = price_raw.find_all('div', class_='sg-row')[1]
+            price_raw = price_raw.find_all('div', class_='a-section')[1]
+            price[0] = price = price_raw.find('span', class_='a-color-base').text[1:]
+            print(price)
+        except:
+            print('uncaught')
+    return price
+
+
 def get_amazon_data(product_name, site_url, country, category=None):
     exitloop = True
     page = 1
@@ -47,7 +72,8 @@ def get_amazon_data(product_name, site_url, country, category=None):
             print('category')
             soup = get_url_data_bot(
                 site_url+'/s', {'k': product_name, 'page': page, 'i': category})
-            # print(soup)
+        soup = soup.find('div', {'class': 's-result-list'})
+        # print(soup)
         count = 0
         for product in soup.find_all("div", {"data-asin": True}):
             print('loop')
@@ -65,27 +91,9 @@ def get_amazon_data(product_name, site_url, country, category=None):
                 count += 1
                 img = product.find('img')
                 ahref = product.find('a')
-                ahref = ahref['href']
-                price = 'price not provided.'
-                try:
-                    prices = product.find_all('span', class_='a-price-whole')
-                    if len(prices) == 1:
-                        price = product.find('span', class_='a-price-whole').text
-                    else:
-                        price = []
-                        for pr in prices:
-                            pr = pr.text
-                            price.append(pr)
-                except:
-                    try:
-                        print('exception')
-                        price_raw = product.find_all('div', class_='sg-row')[1]
-                        price_raw = price_raw.find_all('div', class_='sg-row')[1]
-                        price_raw = price_raw.find_all('div', class_='a-section')[1]
-                        price = price = price_raw.find('span', class_='a-color-base').text[1:]
-                        print(price)
-                    except:
-                        print('uncaught')
+                hash = ahref['href']
+                ahref = site_url+ahref['href']
+                price = get_amazon_price(product)
                 try:
                     rnr = product.find('div', class_="a-row a-size-small")
                     rating = rnr.find('span', class_='a-icon-alt').text
@@ -100,13 +108,40 @@ def get_amazon_data(product_name, site_url, country, category=None):
                     print(rmk)
                 except:
                     pass
-                if len(prices) != 1:
-                    print('multi-price')
-                    for i in range(len(prices)):
-                        yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': rmk}
+                prod_name = ''
+                if hash != '#':
+                    for ch in img['alt']:
+                        if ch == ';':
+                            ch = ' '
+                        prod_name += ch
+                    for i in range(len(price)):
+                        yield {'Product Name': prod_name, 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': rmk}
                 else:
-                    yield {'Product Name': img['alt'], 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price, 'country': country, 'remark': rmk}
-
+                    list = product.find('span', {'cel_widget_id': 'osp-search'})
+                    remark = list.find('span', {'class': 'a-size-large'}).text
+                    itr = 0
+                    for card in list.find_all('li', {'class': 'a-carousel-card'}):
+                        if itr == 0:
+                            itr += 1
+                            continue
+                        rmk = card.find('span', {'class': 'a-size-base-plus'}).text
+                        img = card.find('span', {'data-component-type': 's-product-image'})
+                        href = site_url+img.find('a', {'class': 'a-link-normal'})['href']
+                        prod_name = ''
+                        for ch in img.find('img')['alt']:
+                            if ch == ';':
+                                ch = ' '
+                            prod_name += ch
+                        img_url = img.find('img')['src']
+                        price = get_amazon_price(card)
+                        try:
+                            rnr = card.find('div', class_="a-row a-size-small")
+                            rating = rnr.find('span', class_='a-icon-alt').text
+                            review = rnr.find('span', class_='a-size-base').text
+                        except:
+                            pass
+                        for i in range(len(price)):
+                            yield {'Product Name': prod_name, 'Image URL': img_url, 'Product URL': href, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': remark+' '+rmk}
         if count == 0:
             exitloop = False
         print(count, page)
@@ -284,5 +319,5 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-        for data in get_amazon_data('gucci', get_country_amazon('United States'), 'United States', 'handmade'):
+        for data in get_amazon_data('dog bowl', get_country_amazon('United States'), 'United States'):
             writer.writerow(data)
