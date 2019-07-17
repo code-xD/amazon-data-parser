@@ -31,6 +31,7 @@ def get_amazon_price(htmlcode):
 def get_amazon_ranking(href):
     soup = get_url_data_bot(href)
     try:
+        # print(soup)
         ranking = soup.find('table', {'id': 'productDetails_detailBullets_sections1'})
         ranks = ranking.find_all('th')
         final_rank = ''
