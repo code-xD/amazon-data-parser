@@ -4,18 +4,13 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from selenium import webdriver
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
 
-
-def get_url_data_bot(site_url, params=None):
+def get_url_data_bot(site_url, wd, params=None):
     r = requests.get(site_url, params=params)
-    wd = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
     wd.get(r.url)
-    with open('code.text', 'w') as file:
-        file.write(wd.page_source)
+    # print(r.url)
+    # with open('code.text', 'w') as file:
+    #     file.write(wd.page_source)
     soup = BeautifulSoup(wd.page_source, 'html.parser')
     return soup
 
@@ -28,3 +23,12 @@ def get_url_data(site_url, params=None):
     r = http_pool.urlopen('GET', r.url)
     soup = BeautifulSoup(r.data, 'html.parser')
     return soup
+
+
+def initbot():
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    wd = webdriver.Chrome()
+    return wd

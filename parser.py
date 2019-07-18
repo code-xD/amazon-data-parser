@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import urllib3
-from connections import get_url_data, get_url_data_bot
+from connections import get_url_data, get_url_data_bot, initbot
+
+wd = initbot()
 
 
 def get_amazon_price(htmlcode):
@@ -17,19 +19,20 @@ def get_amazon_price(htmlcode):
                     price.pop()
     except:
         try:
-            print('exception')
+            # print('exception')
             price_raw = htmlcode.find_all('div', class_='sg-row')[1]
             price_raw = price_raw.find_all('div', class_='sg-row')[1]
             price_raw = price_raw.find_all('div', class_='a-section')[1]
             price[0] = price = price_raw.find('span', class_='a-color-base').text[1:]
             print(price)
         except:
-            print('uncaught')
+            pass
+            # print('uncaught')
     return price
 
 
 def get_amazon_ranking(href):
-    soup = get_url_data_bot(href)
+    soup = get_url_data_bot(href, wd)
     try:
         # print(soup)
         ranking = soup.find('table', {'id': 'productDetails_detailBullets_sections1'})
@@ -52,8 +55,8 @@ def get_amazon_ranking(href):
                     ranks.append(rank_no[1:])
                     rank_no = ''
                     flag = 0
-        print(ranks)
-    except:
+        # print(ranks)
+    except TypeError:
         ranking = soup.find('li', {'id': 'SalesRank'}).text
         flag = 0
         ranks = []
@@ -67,27 +70,30 @@ def get_amazon_ranking(href):
                 else:
                     ranks.append(rank_no)
                     flag = 0
-        print(ranks)
+    except:
+        ranks = []
+        # print(ranks)
     return ranks
 
 
 def get_amazon_data(product_name, country, category=None):
     exitloop = True
     page = 1
-    print('called')
+    # print('called')
     site_url = get_country_amazon(country)
     while exitloop:
+        print(page)
         if category is None:
-            soup = get_url_data_bot(site_url+'/s', {'k': product_name, 'page': page})
+            soup = get_url_data_bot(site_url+'/s', wd, {'k': product_name, 'page': page})
         else:
-            print('category')
+            # print('category')
             soup = get_url_data_bot(
                 site_url+'/s', {'k': product_name, 'page': page, 'i': category})
         soup = soup.find('div', {'class': 's-result-list'})
         # print(soup)
         count = 0
         for product in soup.find_all("div", {"data-asin": True}):
-            print('loop')
+            # print('loop')
             sponsored = False
             for tag in product.find_all('div'):
                 try:
@@ -104,7 +110,7 @@ def get_amazon_data(product_name, country, category=None):
                 ahref = img.parent.parent
                 hash = ahref['href']
                 ahref = site_url+ahref['href']
-                print(ahref)
+                # print(ahref)
                 price = get_amazon_price(product)
                 try:
                     rnr = product.find('div', class_="a-row a-size-small")
@@ -117,7 +123,7 @@ def get_amazon_data(product_name, country, category=None):
                     remarks = product.find_all('span', class_='a-badge-text')
                     for remark in remarks:
                         rmk += str(remark.text)+' '
-                    print(rmk)
+                    # print(rmk)
                 except:
                     pass
                 prod_name = ''
@@ -128,7 +134,7 @@ def get_amazon_data(product_name, country, category=None):
                         prod_name += ch
                     rank_list = get_amazon_ranking(ahref)
                     for i in range(len(price)):
-                        yield {'Product Name': prod_name, 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': rmk, 'rank list': rank_list,  'no of categories': ''}
+                        yield {'Product Name': prod_name, 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': rmk, 'rank list': rank_list,  'no of categories': len(rank_list)}
                 else:
                     list = product.find('span', {'cel_widget_id': 'osp-search'})
                     remark = list.find('span', {'class': 'a-size-large'}).text
@@ -155,7 +161,7 @@ def get_amazon_data(product_name, country, category=None):
                             pass
                         rank_list = get_amazon_ranking(href)
                         for i in range(len(price)):
-                            yield {'Product Name': prod_name, 'Image URL': img_url, 'Product URL': href, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': remark+' '+rmk, 'rank list': rank_list, 'no of categories': ''}
+                            yield {'Product Name': prod_name, 'Image URL': img_url, 'Product URL': href, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': remark+' '+rmk, 'rank list': rank_list, 'no of categories': len(rank_list)}
 
         if count == 0:
             exitloop = False
@@ -191,8 +197,7 @@ def get_flipkart_data(product_name):
 
 
 def get_snapdeal_data(product_name):
-    soup = get_url_data('https://www.snapdeal.com/search',
-                        {'keyword': product_name, 'sort': 'plrty'})
+    soup = get_url_data('https://www.snapdeal.com/search?keyword='+product_name+'&sort='+'plrty')
     count = 1
     total = int(soup.find('div', class_='search-result-txt-section').text.split(' ')[2])
     while count < total:

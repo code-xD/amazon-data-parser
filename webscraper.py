@@ -1,6 +1,6 @@
 import csv
 from os import path
-from parser import get_amazon_data
+from parser import get_amazon_data, get_snapdeal_data
 
 if __name__ == '__main__':
     extrawrite = 0
