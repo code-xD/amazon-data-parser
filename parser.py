@@ -143,6 +143,7 @@ def get_amazon_data(product_name, country, category=None):
                         if itr == 0:
                             itr += 1
                             continue
+                        count += 1
                         rmk = card.find('span', {'class': 'a-size-base-plus'}).text
                         img = card.find('span', {'data-component-type': 's-product-image'})
                         href = site_url+img.find('a', {'class': 'a-link-normal'})['href']
