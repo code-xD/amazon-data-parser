@@ -11,7 +11,7 @@ def get_url_data_bot(site_url, wd, params=None):
     # print(r.url)
     # with open('code.text', 'w') as file:
     #     file.write(wd.page_source)
-    soup = BeautifulSoup(wd.page_source, 'html.parser')
+    soup = BeautifulSoup(wd.page_source, 'lxml')
     return soup
 
 
@@ -21,7 +21,7 @@ def get_url_data(site_url, params=None):
     print(r.url)
     http_pool = urllib3.connection_from_url(r.url)
     r = http_pool.urlopen('GET', r.url)
-    soup = BeautifulSoup(r.data, 'html.parser')
+    soup = BeautifulSoup(r.data, 'lxml')
     return soup
 
 
