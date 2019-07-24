@@ -2,9 +2,9 @@ from bs4 import BeautifulSoup
 import urllib3
 import requests
 from connections import get_url_data, get_url_data_bot, initbot
+from multiprocessing import Pool
 
-# wd = initbot()
-href_list = []
+wd = initbot()
 
 
 def get_amazon_price(htmlcode):
@@ -33,21 +33,35 @@ def get_amazon_price(htmlcode):
     return price
 
 
-itr = 0
-
-
 def get_amazon_ranking(href):
-    # global itr
-    # while len(href_list) == 0:
-    #     pass
-    # itr = 1
-    product_pool = urllib3.PoolManager()
-    r = product_pool.urlopen('GET', href)
-    soup = BeautifulSoup(r.data, 'lxml')
-    # soup = get_url_data(href)
-    # soup = get_url_data_bot(href, wd)
-    try:
-        ranking = soup.find('table', {'id': 'productDetails_detailBullets_sections1'})
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
+
+    r = requests.get(href, headers=headers)
+    soup = BeautifulSoup(r.content, 'lxml')
+    ranking = soup.find('table', {'id': 'productDetails_detailBullets_sections1'})
+    if ranking is None:
+        ranking = soup.find('li', {'id': 'SalesRank'})
+        if ranking is None:
+            print('not found')
+            ranks = []
+        else:
+            ranking = ranking.text
+            flag = 0
+            ranks = []
+            rank_no = ''
+            for ch in ranking:
+                if ch == '#':
+                    rank_no = ''
+                    flag = 1
+                    continue
+                if flag == 1:
+                    if ch.isdigit():
+                        rank_no += ch
+                    else:
+                        ranks.append(rank_no)
+                        flag = 0
+    else:
         ranks = ranking.find_all('th')
         final_rank = ''
         for rank in ranks:
@@ -67,24 +81,6 @@ def get_amazon_ranking(href):
                     ranks.append(rank_no[1:])
                     rank_no = ''
                     flag = 0
-        # print(ranks)
-    except TypeError:
-        ranking = soup.find('li', {'id': 'SalesRank'}).text
-        flag = 0
-        ranks = []
-        for ch in ranking:
-            if ch == '#':
-                flag = 1
-            rank_no = ''
-            if flag == 1:
-                if ch != ' ':
-                    rank_no += ch
-                else:
-                    ranks.append(rank_no)
-                    flag = 0
-    except:
-        print('not found')
-        ranks = []
     print(ranks)
     return ranks
 
@@ -92,20 +88,21 @@ def get_amazon_ranking(href):
 def get_amazon_data(product_name, country, category=None):
     exitloop = True
     page = 1
-    # print('called')
     site_url = get_country_amazon(country)
     while exitloop:
         print(page)
         if category is None:
-            soup = get_url_data(site_url+'/s',  {'k': product_name, 'page': page})
+            soup = get_url_data_bot(site_url+'/s', wd, {'k': product_name, 'page': page})
         else:
             # print('category')
-            soup = get_url_data(
-                site_url+'/s', {'k': product_name, 'page': page, 'i': category})
+            soup = get_url_data_bot(
+                site_url+'/s', wd,  {'k': product_name,  'page': page, 'i': category})
         soup = soup.find('div', {'class': 's-result-list'})
         # print(soup)
         count = 0
         main_count = 0
+        product_dict = []
+        href_list = []
         for product in soup.find_all("div", {"data-asin": True}):
             # print('loop')
             sponsored = False
@@ -148,9 +145,9 @@ def get_amazon_data(product_name, country, category=None):
                         prod_name += ch
                     for i in range(len(price)):
                         main_count += 1
-                        # href_list.append([ahref, main_count])
-                        rank_list = get_amazon_ranking(ahref)
-                        yield {'Product Name': prod_name, 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': rmk, 'rank list': rank_list,  'no of categories': len(rank_list)}
+                        href_list.append(ahref)
+                        product_dict.append({'Product Name': prod_name, 'Image URL': img['src'], 'Product URL': ahref, 'Ratings': rating, 'No: of Responses': review,
+                                             'price': price[i], 'country': country, 'remark': rmk, 'rank list': '',  'no of categories': ''})
                 else:
                     list = product.find('span', {'cel_widget_id': 'osp-search'})
                     remark = list.find('span', {'class': 'a-size-large'}).text
@@ -178,10 +175,17 @@ def get_amazon_data(product_name, country, category=None):
                             pass
                         for i in range(len(price)):
                             main_count += 1
-                            # href_list.append([href, main_count])
-                            rank_list = get_amazon_ranking(href)
-                            yield {'Product Name': prod_name, 'Image URL': img_url, 'Product URL': href, 'Ratings': rating, 'No: of Responses': review, 'price': price[i], 'country': country, 'remark': remark+' '+rmk, 'rank list': rank_list, 'no of categories': len(rank_list)}
-
+                            href_list.append(href)
+                            product_dict.append({'Product Name': prod_name, 'Image URL': img_url, 'Product URL': href, 'Ratings': rating, 'No: of Responses': review,
+                                                 'price': price[i], 'country': country, 'remark': rmk, 'rank list': '',  'no of categories': ''})
+        p = Pool(len(href_list))  # Pool tells how many at a time
+        records = p.map(get_amazon_ranking, href_list)
+        p.terminate()
+        p.join()
+        for i in range(len(href_list)):
+            product_dict[i]['rank list'] = records[i]
+            product_dict[i]['no of categories'] = len(records[i])
+            yield product_dict[i]
         if count == 0:
             exitloop = False
         print(count, page)

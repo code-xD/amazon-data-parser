@@ -1,6 +1,6 @@
 import csv
 from os import path
-from parser import get_amazon_data, get_amazon_ranking
+from parser import get_amazon_data, get_amazon_ranking, get_flipkart_data, get_snapdeal_data
 import threading
 
 extrawrite = 0
