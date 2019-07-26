@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import urllib3
 import requests
+import time
 from connections import get_url_data, get_url_data_bot, initbot
 from multiprocessing import Pool
 
@@ -33,12 +34,16 @@ def get_amazon_price(htmlcode):
     return price
 
 
+option = 0
+
+
 def get_amazon_ranking(href):
+    global option
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
-
-    r = requests.get(href, headers=headers)
-    soup = BeautifulSoup(r.content, 'lxml')
+    product_pool = urllib3.PoolManager(timeout=10)
+    r = product_pool.urlopen('GET', href)
+    soup = BeautifulSoup(r.data, 'lxml')
     ranking = soup.find('table', {'id': 'productDetails_detailBullets_sections1'})
     if ranking is None:
         ranking = soup.find('li', {'id': 'SalesRank'})
@@ -88,6 +93,7 @@ def get_amazon_ranking(href):
 def get_amazon_data(product_name, country, category=None):
     exitloop = True
     page = 1
+    global wd
     site_url = get_country_amazon(country)
     while exitloop:
         print(page)
