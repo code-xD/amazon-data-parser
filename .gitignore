@@ -2,4 +2,6 @@
 code
 code.*
 newtab.py
+*.pyc
+*.csv
 
