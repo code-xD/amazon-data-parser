@@ -1,5 +1,5 @@
 from os import path
-from parser import get_country_amazon, get_amazon_data
+from parser import get_amazon_data, get_etsy_data, get_alibaba_data, get_flipkart_data, get_snapdeal_data
 import csv
 
 if __name__ == '__main__':
@@ -13,5 +13,6 @@ if __name__ == '__main__':
     with open('E-commerce Data.csv', 'a') as csvfile:
         print('data')
         writer = csv.DictWriter(csvfile, fieldnames=fields)
+        # modify the line 17 according to the site for which you want to parse the data.
         for data in get_amazon_data("carving knife",  'United States'):
             writer.writerow(data)
