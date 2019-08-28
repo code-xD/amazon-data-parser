@@ -1,2 +1,7 @@
 .~lock.E-commerce Data.csv#
 code
+code.*
+newtab.py
+*.pyc
+*.csv
+
