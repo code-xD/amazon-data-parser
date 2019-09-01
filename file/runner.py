@@ -1,5 +1,5 @@
 from os import path
-from .parser import get_country_amazon, get_amazon_data
+from parser import get_country_amazon, get_amazon_data
 import csv
 
 if __name__ == '__main__':
