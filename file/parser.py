@@ -344,10 +344,12 @@ def get_etsy_data(product_name):
                 rating = 'No ratings Provided'
                 responses = 'No responses available'
                 price = product.find('span', class_='currency-value').text
+                price = price.replace(',', '')
                 try:
                     rnr = product.find('span', class_='v2-listing-card__rating')
                     rating = rnr.find('input')['value']
                     responses = rnr.find('span', class_='text-body-smaller').text[1:-1]
+                    responses = responses.replace(',', '')
                     yield [product['title'], img['src'],  href, rating, responses, price, 'United States']
                 except:
                     pass
