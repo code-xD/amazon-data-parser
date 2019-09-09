@@ -62,8 +62,6 @@ def EtsyCSVwriter(Product_name):
         writer = csv.writer(file)
         for data in get_etsy_data(Product_name):
             writer.writerow(data)
-    file = open(path)
-    dataset.scraped_file = File(file)
-    dataset.save()
-    file.close()
+            dataset.scraped_file = File(file)
+            dataset.save()
     outputetsylearner(dataset)
