@@ -58,6 +58,9 @@ def EtsyCSVwriter(Product_name):
     dataset, created = Dataset.objects.get_or_create(name='Etsy-'+Product_name)
     print(dataset)
     path = join(settings.MEDIA_ROOT, 'scraped', f"{dataset.name}.csv")
+    f = open(path)
+    dataset.scraped_file = File(f)
+    f.close()
     with open(path, 'w') as file:
         writer = csv.writer(file)
         for data in get_etsy_data(Product_name):
