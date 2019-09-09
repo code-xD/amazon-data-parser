@@ -1,8 +1,11 @@
 import csv
 from .forms import WebsiteForm, AmazonProductForm, OtherProductForm
 from django.http import StreamingHttpResponse
+from .models import Dataset
 from .parser import get_amazon_data, get_etsy_data, get_alibaba_data, get_flipkart_data, get_snapdeal_data
 from django.shortcuts import render, redirect
+from .machinemodels import EtsyCSVwriter
+from django.http import HttpResponse
 
 
 class Echo:
@@ -49,8 +52,11 @@ def website_form(request, website):
             if form.is_valid():
                 data = form.cleaned_data
                 if website == 'Etsy':
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_etsy_data(data['Product_name'])),
-                                                     content_type="text/csv")
+                    name = EtsyCSVwriter(data['Product_name'])
+                    dataset = Dataset.objects.get(name='Etsy-'+data['Product_name'])
+                    response = HttpResponse(dataset.ml_file, content_type='text/csv')
+                    response['Content-Disposition'] = f"""attachment; filename="{website}-{data['Product_name']}.csv"""
+                    return response
                 elif website == 'Snapdeal':
                     response = StreamingHttpResponse((writer.writerow(data) for data in get_snapdeal_data(data['Product_name'])),
                                                      content_type="text/csv")

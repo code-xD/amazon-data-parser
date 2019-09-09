@@ -24,9 +24,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '&3!-ccmf_!)dkexv$^_gfik-t6m+y30_=4iouz^#q3-w@7ub&1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['ecommercescraper.herokuapp.com']
+ALLOWED_HOSTS = ['157.245.97.115', 'localhost']
 
 
 # Application definition
@@ -119,6 +119,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Static files (CSS, JavaScript, Images)
@@ -128,5 +131,5 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
 STATIC_URL = '/static/'
-django_heroku.settings(locals())
