@@ -13,6 +13,7 @@ import csv
 from django.core.files import File
 from os.path import join
 from django.conf import settings
+from celery.decorators import task
 
 view_path = join(settings.BASE_DIR, 'file', 'Regressor_model.sav')
 load_lr_model = pickle.load(open(view_path, 'rb'))
@@ -53,17 +54,18 @@ def outputetsylearner(dataset):
     file.close()
 
 
+@task(name="machinelearnetsy")
 def EtsyCSVwriter(Product_name):
     print(Product_name)
     dataset, created = Dataset.objects.get_or_create(name='Etsy-'+Product_name)
     print(dataset)
     path = join(settings.MEDIA_ROOT, 'scraped', f"{dataset.name}.csv")
-    f = open(path)
-    dataset.scraped_file = File(f)
-    dataset.save()
-    f.close()
     with open(path, 'w') as file:
         writer = csv.writer(file)
         for data in get_etsy_data(Product_name):
             writer.writerow(data)
+    f = open(path)
+    dataset.scraped_file = File(f)
+    dataset.save()
+    f.close()
     outputetsylearner(dataset)

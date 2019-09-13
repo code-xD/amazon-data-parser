@@ -52,11 +52,8 @@ def website_form(request, website):
             if form.is_valid():
                 data = form.cleaned_data
                 if website == 'Etsy':
-                    name = EtsyCSVwriter(data['Product_name'])
-                    dataset = Dataset.objects.get(name='Etsy-'+data['Product_name'])
-                    response = HttpResponse(dataset.ml_file, content_type='text/csv')
-                    response['Content-Disposition'] = f"""attachment; filename="{website}-{data['Product_name']}.csv"""
-                    return response
+                    EtsyCSVwriter.delay(data['Product_name'])
+                    return redirect("/history")
                 elif website == 'Snapdeal':
                     response = StreamingHttpResponse((writer.writerow(data) for data in get_snapdeal_data(data['Product_name'])),
                                                      content_type="text/csv")
@@ -70,3 +67,15 @@ def website_form(request, website):
                 return response
         form = OtherProductForm()
     return render(request, 'file/website_form.html', {'form': form})
+
+
+def retrieveHistoryView(request):
+    datasets = Dataset.objects.all()
+    return render(request, 'file/history.html', {'datasets': datasets})
+
+
+def downloadFile(request, data_name):
+    dataset = Dataset.objects.get(name=data_name)
+    response = HttpResponse(dataset.ml_file, content_type='text/csv')
+    response['Content-Disposition'] = f"attachment; filename='{data_name}.csv'"
+    return response
