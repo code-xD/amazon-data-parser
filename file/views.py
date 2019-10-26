@@ -1,8 +1,12 @@
 import csv
 from .forms import WebsiteForm, AmazonProductForm, OtherProductForm
 from django.http import StreamingHttpResponse
+from .models import Dataset
 from .parser import get_amazon_data, get_etsy_data, get_alibaba_data, get_flipkart_data, get_snapdeal_data
 from django.shortcuts import render, redirect
+from .machinemodels import EtsyCSVwriter,AlibabaCSVwriter
+from django.http import HttpResponse
+import time
 
 
 class Echo:
@@ -49,14 +53,16 @@ def website_form(request, website):
             if form.is_valid():
                 data = form.cleaned_data
                 if website == 'Etsy':
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_etsy_data(data['Product_name'])),
-                                                     content_type="text/csv")
+                    EtsyCSVwriter.delay(data['Product_name'])
+                    time.sleep(10)
+                    return redirect("/history")
                 elif website == 'Snapdeal':
                     response = StreamingHttpResponse((writer.writerow(data) for data in get_snapdeal_data(data['Product_name'])),
                                                      content_type="text/csv")
                 elif website == 'Alibaba':
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_alibaba_data(data['Product_name'])),
-                                                     content_type="text/csv")
+                    AlibabaCSVwriter.delay(data['Product_name'])
+                    time.sleep(10)
+                    return redirect("/history")
                 elif website == 'Flipkart':
                     response = StreamingHttpResponse((writer.writerow(data) for data in get_flipkart_data(data['Product_name'])),
                                                      content_type="text/csv")
@@ -64,3 +70,15 @@ def website_form(request, website):
                 return response
         form = OtherProductForm()
     return render(request, 'file/website_form.html', {'form': form})
+
+
+def retrieveHistoryView(request):
+    datasets = Dataset.objects.all()
+    return render(request, 'file/history.html', {'datasets': datasets})
+
+
+def downloadFile(request, data_name):
+    dataset = Dataset.objects.get(name=data_name)
+    response = HttpResponse(dataset.ml_file, content_type='text/csv')
+    response['Content-Disposition'] = f"""attachment; filename="{data_name}.csv"""
+    return response
