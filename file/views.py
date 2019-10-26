@@ -82,3 +82,23 @@ def downloadFile(request, data_name):
     response = HttpResponse(dataset.ml_file, content_type='text/csv')
     response['Content-Disposition'] = f"""attachment; filename="{data_name}.csv"""
     return response
+
+
+
+def viewCSV(request, data_name):
+    dataset = Dataset.objects.get(name=data_name)
+    rows = []
+    fields = []
+    # reading csv file
+    with open(dataset.ml_file.path, 'r') as csvfile:
+        # creating a csv reader object
+        csvreader = csv.reader(csvfile)
+        fields = next(csvreader)
+        # extracting each data row one by one
+        count = 0
+        for row in csvreader:
+            count += 1
+            if count >100:
+                break
+            rows.append(row)
+    return render(request,'file/viewfile.html',{'rows':rows,'fields':fields})
