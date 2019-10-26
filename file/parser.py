@@ -120,8 +120,8 @@ def get_amazon_data(product_name, country, category=None):
                 except:
                     pass
             if not sponsored:
-                rating = 'No ratings Provided'
-                review = 'No responses available'
+                rating = 0
+                review = 0
                 count += 1
                 img = product.find('img')
                 ahref = img.parent.parent
@@ -302,8 +302,22 @@ def get_alibaba_data(product_name):
                     price = product.find('div', class_='price').b.text
                     price = price.replace(' ', '')
                     price = price.replace('\n', '')
-                    rating = 'No ratings Provided'
-                    responses = 'No responses available'
+                    lst = price.split('-')
+                    obj1=obj2=''
+                    for ch in lst[0]:
+                        if ch.isdigit() or ch == '.':
+                            obj1+=ch
+                    print(obj1)
+                    obj1 = float(obj1)
+                    for ch in lst[1]:
+                        if ch.isdigit() or ch == '.':
+                            obj2+=ch
+                    print(obj2)
+                    obj2 = float(obj2)
+                    price = (obj1+obj2)/2
+                    print(price)
+                    rating = 0
+                    responses = 0
                     try:
                         rating = product.find('span', class_='list-item__company-record-num').text
                         rating = rating.replace(' ', '')
@@ -320,7 +334,7 @@ def get_alibaba_data(product_name):
                         print(rating, resp)
                     except:
                         print('exception')
-                    yield [img['alt'], 'https:'+img['src'], href, rating, resp,  price, 'International']
+                    yield [img['alt'], 'https:'+img['src'], href, rating, resp,  str(price), 'International']
                 except:
                     pass
         except:
