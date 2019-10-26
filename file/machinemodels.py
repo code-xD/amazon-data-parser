@@ -111,7 +111,10 @@ def EtsyCSVwriter(Product_name):
     	"sort":"total"
     }
     r = requests.post('https://api.lc.wordtracker.com/v2/fetch', params = params)
-    volume = int(r.json()['results'][0]["avg_volume_for_last_12_months"])
+    try:
+        volume = int(r.json()['results'][0]["avg_volume_for_last_12_months"])
+    except:
+        volume = 0    
     dataset.volume = volume
     dataset.save()
     print(volume)
@@ -142,7 +145,10 @@ def AlibabaCSVwriter(Product_name):
     	"sort":"total"
     }
     r = requests.post('https://api.lc.wordtracker.com/v2/fetch', params = params)
-    volume = int(r.json()['results'][0]["avg_volume_for_last_12_months"])
+    try:
+        volume = int(r.json()['results'][0]["avg_volume_for_last_12_months"])
+    except:
+        volume = 0
     dataset.volume = volume
     dataset.save()
     print(volume)

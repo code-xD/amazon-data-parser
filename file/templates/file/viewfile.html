@@ -25,15 +25,15 @@ tr:nth-child(even) {
 
 <table>
   <tr>
-    <th>Query </th>
-    <th>Machine Learning Output</th>
-    <th>Sample Output</th>
+    {% for field in fields%}
+    <th>{{field}} </th>
+    {% endfor %}
   </tr>
-  {% for dataset in datasets%}
+  {% for row in rows %}
   <tr>
-    <td>{{dataset.name}}</td>
-    <td><a href="{% url 'download-file' dataset.name %}">link</a></td>
-    <td><a href="{% url 'view-file' dataset.name %}">view</a></td>
+    {% for col in row %}
+    <td>{{col}}</td>
+    {% endfor %}
   </tr>
   {% endfor %}
 </table>
