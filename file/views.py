@@ -20,26 +20,26 @@ class Echo:
 
 
 def printCSV(data):
-    # try:
-    dataset = Dataset.objects.get(
-        name=data['Website'][0]+'-'+data['keyword'][0])
-    rows = []
-    fields = []
-    # reading csv file
-    with open(dataset.ml_file.path, 'r') as csvfile:
-        # creating a csv reader object
-        csvreader = csv.reader(csvfile)
-        fields = next(csvreader)
-        # extracting each data row one by one
-        count = 0
-        for row in csvreader:
-            count += 1
-            if count > 200:
-                break
-            rows.append(row)
-    return {'fields':fields,'rows':rows}
-    # except:
-    #     return None            
+    try:
+        dataset = Dataset.objects.get(
+            name=data['Website'][0]+'-'+data['keyword'][0])
+        rows = []
+        fields = []
+        # reading csv file
+        with open(dataset.ml_file.path, 'r') as csvfile:
+            # creating a csv reader object
+            csvreader = csv.reader(csvfile)
+            fields = next(csvreader)
+            # extracting each data row one by one
+            count = 0
+            for row in csvreader:
+                count += 1
+                if count > 200:
+                    break
+                rows.append(row)
+        return {'fields':fields,'rows':rows}
+    except:
+        return None            
 
 def home(request):
     if request.method == 'POST':
@@ -61,8 +61,8 @@ def home(request):
         elif data['Website'] == 'Alibaba':
             AlibabaCSVwriter.delay(data['keyword'][0])
         data = printCSV(data)    
-        # if printCSV(data) is None:
-        #     return render(request, "file/index.html", {"csv": False})
+        if data is None:
+            return render(request, "file/index.html", {"csv": False})
         return render(request, 'file/index.html', {"csv": True,'rows': data['rows'], 'fields': data['fields']})
     return render(request, 'file/index.html', {"csv": False})
 
