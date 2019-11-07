@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>SEARCHIFY</title>
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css'>
+<link rel='stylesheet' href='https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css'><link rel="stylesheet" href="{% static 'style.css' %}">
+
+</head>
+<body>
+       
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="#">SERACHIFY</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+              
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                      <a class="nav-link" href="#">HOME </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#">ABOUT US </a>
+                    </li>   
+                  </ul>
+               
+                </div>
+              </nav>
+              <div class="forms">
+            <form method='POST' action="/">
+                {% csrf_token %}
+                <div class="form-row" >
+                    <div class="form-group col-md-2">
+                        <label for="inputState">Website</label>
+                        <select name="Website" id="inputState" class="form-control">
+                            <option selected>Amazon</option>
+                            <option>Alibaba</option>
+                            <option>Etsy</option>
+                        </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="inputState">Country(Only for Amazon)</label>
+                            <select name="Country" id="inputState" class="form-control">
+                                <option>China</option>                                
+                                <option>India</option>                                
+                                <option>Japan</option>                                
+                                <option>Singapore</option>                                    
+                                <option>Turkey</option>                                 
+                                <option>United Arab Emirates</option>
+                                <option>France</option>                                 
+                                <option>Germany</option>                                  
+                                <option>Italy</option>                                
+                                <option>Netherlands</option>                                      
+                                <option>Spain</option>                                
+                                <option>United Kingdom</option>                                         
+                                <option>Canada</option>                                 
+                                <option>Mexico</option>                                 
+                                <option>United States</option>                                        
+                                <option>Australia</option>                                    
+                                <option>Brazil</option>                               
+                            </select>
+                        </div>
+
+                    <div class="col-md-3">
+                        <label for="inputState">Category(Only For Amazon)</label>
+                        <input type="text" name="category" class="form-control" placeholder="category">
+                        </div>
+                    <div class="col-md-3">
+                        <label for="inputState">Keyword</label>
+                        <input type="text" name="keyword" class="form-control" placeholder="keyword">
+                        </div>
+
+                    <div class="col-md-1 search" >
+                        <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
+                        </div>
+                    </div>
+                </form>  
+              </div>               
+                      
+                     
+    
+
+  
+<div class="table-reponsive box">
+{% if csv %}
+<table id="example" class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                {% for field in fields%}
+                <th>{{field}} </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                {% for col in row %}
+                <td>{{col}}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <h2>Either you haven't searched anything.<br>Please reload the page after 10 mins if searched something.</h1>    
+{%endif%}    
+</div>
+<!-- partial -->
+  <script src='https://code.jquery.com/jquery-3.3.1.js'></script>
+<script src='https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js'></script>
+<script src='https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js'></script><script  src="{% static "script.js" %}"></script>
+
+</body>
+</html>
