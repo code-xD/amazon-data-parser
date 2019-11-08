@@ -58,7 +58,7 @@ def home(request):
             return response
         elif data['Website'][0] == 'Etsy':
             EtsyCSVwriter.delay(data['keyword'][0])
-        elif data['Website'] == 'Alibaba':
+        elif data['Website'][0] == 'Alibaba':
             AlibabaCSVwriter.delay(data['keyword'][0])
         data = printCSV(data)    
         if data is None:
