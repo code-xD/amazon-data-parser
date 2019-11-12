@@ -8,7 +8,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 import pickle
 import requests
-from .parser import get_etsy_data,get_alibaba_data
+from .parser import get_etsy_data,get_alibaba_data,get_amazon_data
 from .models import Dataset
 import csv
 from django.core.files import File
@@ -164,3 +164,42 @@ def AlibabaCSVwriter(Product_name):
     dataset.save()
     f.close()
     outputlearner(dataset,count,'Alibaba')
+
+@task(name="machinelearnalibaba")
+def AmazonCSVwriter(Product_name ,Country ,Category=None):
+    print(Product_name)
+    if Category is not None:
+        dataset, created = Dataset.objects.get_or_create(name='Amazon-'+Product_name+'-'+Country+'-'+Category)
+
+    else:
+        dataset, created = Dataset.objects.get_or_create(
+            name='Amazon-'+Product_name+'-'+Country)
+    params = {
+    	"app_key":"975d166e40fb85507efb25df1feda61d",
+    	"app_id":"b5c9ae7c",
+    	"seeds": Product_name,
+    	"engine":"google",
+    	"country_code":"US",
+    	"scale":"True",
+    	"sort":"total"
+    }
+    r = requests.post('https://api.lc.wordtracker.com/v2/fetch', params = params)
+    try:
+        volume = int(r.json()['results'][0]["avg_volume_for_last_12_months"])
+    except:
+        volume = 0
+    dataset.volume = volume
+    dataset.save()
+    print(volume)
+    count =  0
+    path = join(settings.MEDIA_ROOT, 'scraped', f"{dataset.name}.csv")
+    with open(path, 'w') as file:
+        writer = csv.writer(file)
+        for data in get_amazon_data(Product_name,Country,Category):
+            count+=1
+            writer.writerow(data)
+    f = open(path)
+    dataset.scraped_file = File(f)
+    dataset.save()
+    f.close()
+    outputlearner(dataset,count,'Amazon')
