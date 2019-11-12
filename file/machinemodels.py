@@ -65,36 +65,63 @@ def outputlearner(dataset,count,org):
         view_path = join(settings.BASE_DIR, 'file', 'Regressor_model_Etsy.sav')
     elif org == 'Alibaba':
         view_path = join(settings.BASE_DIR, 'file', 'Regressor_model_Alibaba.sav')
+    elif org == 'Amazon':
+        view_path = join(settings.BASE_DIR, 'file', 'Regressor_model_Amazon.sav')
     load_lr_model = pickle.load(open(view_path, 'rb'))
     dataset_N = pd.read_csv(dataset.scraped_file.path)
     N = dataset_N.iloc[:, :].values
-    # N.shape
+    if org != 'Amazon':
+        
+        # N.shape
+        N = N[N[:, 4].argsort()[::-1]]
 
-    N = N[N[:, 4].argsort()[::-1]]
-
-    z_N = np.delete(N, [0, 1, 2], axis=1)
-    labelencoder_z_N = LabelEncoder()
-    z_N[:, 3] = 1+labelencoder_z_N.fit_transform(z_N[:, 3])
-    # Predicting ranks from our model & scaling ranks
-    y_N = load_lr_model.predict(poly_reg.fit_transform(z_N))
-    y_N = y_N.round(0)
-    y_N = y_N.astype(int)
-    y_N = np.interp(y_N, (y_N.min(), y_N.max()), (+1, +20))
-    # Making & Sorting the final output file
-    N.shape
-    final = np.concatenate((N, y_N[:, None]), axis=1)
-    final = final[final[:, 7].argsort()]
-    # Renaming the columns in table & Saving the table into csv file
-    data = pd.DataFrame(final, columns=['Item', 'Image URL', 'Item URL',
-                                        'Rating', 'Reviews', 'Price', 'Country', 'Predicted Rank'])
-    path = join(settings.MEDIA_ROOT, 'machinelearned', f'{dataset.name}.csv')
-    pd.DataFrame(data).to_csv(path)
-    file = open(path)
-    dataset.ml_file = File(file)
-    dataset.save()
-    file.close()
-    appendvolume(org,dataset,count)
-
+        z_N = np.delete(N, [0, 1, 2], axis=1)
+        labelencoder_z_N = LabelEncoder()
+        z_N[:, 3] = 1+labelencoder_z_N.fit_transform(z_N[:, 3])
+        # Predicting ranks from our model & scaling ranks
+        y_N = load_lr_model.predict(poly_reg.fit_transform(z_N))
+        y_N = y_N.round(0)
+        y_N = y_N.astype(int)
+        y_N = np.interp(y_N, (y_N.min(), y_N.max()), (+1, +20))
+        # Making & Sorting the final output file
+        N.shape
+        final = np.concatenate((N, y_N[:, None]), axis=1)
+        final = final[final[:, 7].argsort()]
+        # Renaming the columns in table & Saving the table into csv file
+        data = pd.DataFrame(final, columns=['Item', 'Image URL', 'Item URL',
+                                            'Rating', 'Reviews', 'Price', 'Country', 'Predicted Rank'])
+        path = join(settings.MEDIA_ROOT, 'machinelearned', f'{dataset.name}.csv')
+        pd.DataFrame(data).to_csv(path)
+        file = open(path)
+        dataset.ml_file = File(file)
+        dataset.save()
+        file.close()
+        appendvolume(org,dataset,count)
+    elif org =='Amazon':
+        N = N[N[:, 7].argsort()]
+        N = N[N[:, 4].argsort()[::-1]]
+        z_N = np.delete(N, [0, 1, 2], axis=1)
+        labelencoder_z_N = LabelEncoder()
+        z_N[:, 3] = 1+labelencoder_z_N.fit_transform(z_N[:, 3])
+        z_N[:, 4] = 1+labelencoder_z_N.fit_transform(z_N[:, 4])
+        y_N = load_lr_model.predict(poly_reg.fit_transform(z_N))
+        y_N = y_N.round(0)
+        y_N = y_N.astype(int)
+        y_N = np.interp(y_N, (y_N.min(), y_N.max()), (+1, +20))
+        # Making & Sorting the final output file
+        N.shape
+        final = np.concatenate((N, y_N[:, None]), axis=1)
+        final = final[final[:, 7].argsort()]
+        data = pd.DataFrame(final, columns=['Item', 'Image URL', 'Item URL', 'Rating', 'Reviews',
+                                            'Price', 'Country', 'Amazon Tag', 'Category rank', 'Ranks', 'Predicted Rank'])
+        path = join(settings.MEDIA_ROOT, 'machinelearned',
+                    f'{dataset.name}.csv')
+        pd.DataFrame(data).to_csv(path)
+        file = open(path)
+        dataset.ml_file = File(file)
+        dataset.save()
+        file.close()
+        appendvolume(org, dataset, count)
 
 
 @task(name="machinelearnetsy")
@@ -165,7 +192,7 @@ def AlibabaCSVwriter(Product_name):
     f.close()
     outputlearner(dataset,count,'Alibaba')
 
-@task(name="machinelearnalibaba")
+@task(name="machinelearnamazon")
 def AmazonCSVwriter(Product_name ,Country ,Category=None):
     print(Product_name)
     if Category is not None:
@@ -173,7 +200,7 @@ def AmazonCSVwriter(Product_name ,Country ,Category=None):
 
     else:
         dataset, created = Dataset.objects.get_or_create(
-            name='Amazon-'+Product_name+'-'+Country)
+            name='Amazon-'+Product_name+'-'+Country+'-')
     params = {
     	"app_key":"975d166e40fb85507efb25df1feda61d",
     	"app_id":"b5c9ae7c",

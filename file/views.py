@@ -4,7 +4,7 @@ from django.http import StreamingHttpResponse
 from .models import Dataset
 from .parser import get_amazon_data, get_etsy_data, get_alibaba_data, get_flipkart_data, get_snapdeal_data
 from django.shortcuts import render, redirect
-from .machinemodels import EtsyCSVwriter,AlibabaCSVwriter
+from .machinemodels import EtsyCSVwriter,AlibabaCSVwriter,AmazonCSVwriter
 from django.http import HttpResponse
 import time
 
@@ -21,8 +21,12 @@ class Echo:
 
 def printCSV(data):
     try:
-        dataset = Dataset.objects.get(
-            name=data['Website'][0]+'-'+data['keyword'][0])
+        if data['Website'][0]!='Amazon':
+            dataset = Dataset.objects.get(
+                name=data['Website'][0]+'-'+data['keyword'][0])
+        else:
+            dataset = Dataset.objects.get(
+                name='Amazon-'+data['keyword'][0]+'-'+data['country'][0]+'-'+data['category'][0])
         rows = []
         fields = []
         # reading csv file
@@ -49,13 +53,10 @@ def home(request):
         print(data)
         if data['Website'][0] == 'Amazon':
             if data['category'][0] == '':
-                response = StreamingHttpResponse((writer.writerow(data) for data in get_amazon_data(data['keyword'][0], data['Country'][0])),
-                                                    content_type="text/csv")
+                print('Amazon')
+                AmazonCSVwriter.delay(data['keyword'][0], data['Country'][0])
             else:
-                response = StreamingHttpResponse((writer.writerow(data) for data in get_amazon_data(data['keyword'][0], data['Country'][0], data['category'][0])),
-                                                    content_type="text/csv")
-            response['Content-Disposition'] = f"""attachment; filename="{data['Website']}-{data['keyword']}-{data['Country']}-{data['category']}.csv"""
-            return response
+                AmazonCSVwriter.delay(data['keyword'][0], data['Country'][0], data['category'][0])
         elif data['Website'][0] == 'Etsy':
             EtsyCSVwriter.delay(data['keyword'][0])
         elif data['Website'][0] == 'Alibaba':
@@ -65,54 +66,6 @@ def home(request):
             return render(request, "file/index.html", {"csv": False})
         return render(request, 'file/index.html', {"csv": True,'rows': data['rows'], 'fields': data['fields']})
     return render(request, 'file/index.html', {"csv": False})
-
-
-def website_form(request, website):
-    pseudo_buffer = Echo()
-    writer = csv.writer(pseudo_buffer)
-    if website == 'Amazon':
-        if request.method == 'POST':
-            form = AmazonProductForm(request.POST)
-            if form.is_valid():
-                data = form.cleaned_data
-                print(data)
-                if data['Category'] == '':
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_amazon_data(data['Product_name'], data['Country'])),
-                                                     content_type="text/csv")
-                else:
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_amazon_data(data['Product_name'], data['Country'], data['Category'])),
-                                                     content_type="text/csv")
-                response['Content-Disposition'] = f"""attachment; filename="{website}-{data['Product_name']}-{data['Country']}-{data['Category']}.csv"""
-                return response
-        form = AmazonProductForm()
-    else:
-        if request.method == 'POST':
-            form = OtherProductForm(request.POST)
-            if form.is_valid():
-                data = form.cleaned_data
-                if website == 'Etsy':
-                    EtsyCSVwriter.delay(data['Product_name'])
-                    time.sleep(10)
-                    return redirect("/history")
-                elif website == 'Snapdeal':
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_snapdeal_data(data['Product_name'])),
-                                                     content_type="text/csv")
-                elif website == 'Alibaba':
-                    AlibabaCSVwriter.delay(data['Product_name'])
-                    time.sleep(10)
-                    return redirect("/history")
-                elif website == 'Flipkart':
-                    response = StreamingHttpResponse((writer.writerow(data) for data in get_flipkart_data(data['Product_name'])),
-                                                     content_type="text/csv")
-                response['Content-Disposition'] = f"""attachment; filename="{website}-{data['Product_name']}.csv"""
-                return response
-        form = OtherProductForm()
-    return render(request, 'file/website_form.html', {'form': form})
-
-
-def retrieveHistoryView(request):
-    datasets = Dataset.objects.all()
-    return render(request, 'file/history.html', {'datasets': datasets})
 
 
 def downloadFile(request, data_name):

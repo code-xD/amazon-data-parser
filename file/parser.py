@@ -3,7 +3,7 @@ import urllib3
 import requests
 import time
 from .connections import get_url_data, get_url_data_bot, initbot
-from multiprocessing import Pool
+from billiard import Pool
 
 # wd = initbot()
 
@@ -96,106 +96,112 @@ def get_amazon_data(product_name, country, category=None):
     global wd
     site_url = get_country_amazon(country)
     while exitloop:
-        print(page)
-        if category is None:
-            soup = get_url_data(site_url+'/s', {'k': product_name, 'page': page})
-        else:
-            # print('category')
-            soup = get_url_data(
-                site_url+'/s',  {'k': product_name,  'page': page, 'i': category})
-        soup = soup.find('div', {'class': 's-result-list'})
-        # print(soup)
-        count = 0
-        main_count = 0
-        product_dict = []
-        href_list = []
-        for product in soup.find_all("div", {"data-asin": True}):
-            # print('loop')
-            sponsored = False
-            for tag in product.find_all('div'):
-                try:
-                    if tag["data-component-type"] == "sp-sponsored-result":
-                        sponsored = True
-                        break
-                except:
-                    pass
-            if not sponsored:
-                rating = 0
-                review = 0
-                count += 1
-                img = product.find('img')
-                ahref = img.parent.parent
-                hash = ahref['href']
-                ahref = site_url+ahref['href']
-                # print(ahref)
-                price = get_amazon_price(product)
-                try:
-                    rnr = product.find('div', class_="a-row a-size-small")
-                    rating = rnr.find('span', class_='a-icon-alt').text
-                    review = rnr.find('span', class_='a-size-base').text
-                except:
-                    pass
-                rmk = ''
-                try:
-                    remarks = product.find_all('span', class_='a-badge-text')
-                    for remark in remarks:
-                        rmk += str(remark.text)+' '
-                    # print(rmk)
-                except:
-                    pass
-                prod_name = ''
-                if hash != '#':
-                    for ch in img['alt']:
-                        if ch == ';':
-                            ch = ' '
-                        prod_name += ch
-                    for i in range(len(price)):
-                        main_count += 1
-                        href_list.append(ahref)
-                        product_dict.append([prod_name,  img['src'],  ahref,
-                                             rating,  review, price[i],  country, rmk])
-                else:
-                    list = product.find('span', {'cel_widget_id': 'osp-search'})
-                    remark = list.find('span', {'class': 'a-size-large'}).text
-                    itr = 0
-                    for card in list.find_all('li', {'class': 'a-carousel-card'}):
-                        if itr == 0:
-                            itr += 1
-                            continue
-                        count += 1
-                        rmk = card.find('span', {'class': 'a-size-base-plus'}).text
-                        img = card.find('span', {'data-component-type': 's-product-image'})
-                        href = site_url+img.find('a', {'class': 'a-link-normal'})['href']
-                        prod_name = ''
-                        for ch in img.find('img')['alt']:
+        try:
+            print(page)
+            if category is None:
+                soup = get_url_data(site_url+'/s', {'k': product_name, 'page': page})
+            else:
+                # print('category')
+                soup = get_url_data(
+                    site_url+'/s',  {'k': product_name,  'page': page, 'i': category})
+            soup = soup.find('div', {'class': 's-result-list'})
+            # print(soup)
+            count = 0
+            main_count = 0
+            product_dict = []
+            href_list = []
+            for product in soup.find_all("div", {"data-asin": True}):
+                # print('loop')
+                sponsored = False
+                for tag in product.find_all('div'):
+                    try:
+                        if tag["data-component-type"] == "sp-sponsored-result":
+                            sponsored = True
+                            break
+                    except:
+                        pass
+                if not sponsored:
+                    rating = 0
+                    review = 0
+                    count += 1
+                    img = product.find('img')
+                    ahref = img.parent.parent
+                    hash = ahref['href']
+                    ahref = site_url+ahref['href']
+                    # print(ahref)
+                    price = get_amazon_price(product)
+                    try:
+                        rnr = product.find('div', class_="a-row a-size-small")
+                        rating = rnr.find('span', class_='a-icon-alt').text
+                        review = rnr.find('span', class_='a-size-base').text
+                    except:
+                        pass
+                    rmk = ''
+                    try:
+                        remarks = product.find_all('span', class_='a-badge-text')
+                        for remark in remarks:
+                            rmk += str(remark.text)+' '
+                        # print(rmk)
+                    except:
+                        pass
+                    prod_name = ''
+                    if hash != '#':
+                        for ch in img['alt']:
                             if ch == ';':
                                 ch = ' '
                             prod_name += ch
-                        img_url = img.find('img')['src']
-                        price = get_amazon_price(card)
-                        try:
-                            rnr = card.find('div', class_="a-row a-size-small")
-                            rating = rnr.find('span', class_='a-icon-alt').text
-                            review = rnr.find('span', class_='a-size-base').text
-                        except:
-                            pass
                         for i in range(len(price)):
                             main_count += 1
-                            href_list.append(href)
-                            product_dict.append(
-                                [prod_name,  img_url, href,  rating, review, price[i],  country,  rmk])
-        p = Pool(len(href_list))  # Pool tells how many at a time
-        records = p.map(get_amazon_ranking, href_list)
-        p.terminate()
-        p.join()
-        for i in range(len(href_list)):
-            product_dict[i].append(records[i])
-            product_dict[i].append(len(records[i]))
-            yield product_dict[i]
-        if count == 0:
-            exitloop = False
-        print(count, page)
-        page += 1
+                            href_list.append(ahref)
+                            product_dict.append([prod_name,  img['src'],  ahref,
+                                                rating,  review, price[i],  country, rmk])
+                    else:
+                        list = product.find('span', {'cel_widget_id': 'osp-search'})
+                        remark = list.find('span', {'class': 'a-size-large'}).text
+                        itr = 0
+                        for card in list.find_all('li', {'class': 'a-carousel-card'}):
+                            if itr == 0:
+                                itr += 1
+                                continue
+                            count += 1
+                            rmk = card.find('span', {'class': 'a-size-base-plus'}).text
+                            img = card.find('span', {'data-component-type': 's-product-image'})
+                            href = site_url+img.find('a', {'class': 'a-link-normal'})['href']
+                            prod_name = ''
+                            for ch in img.find('img')['alt']:
+                                if ch == ';':
+                                    ch = ' '
+                                prod_name += ch
+                            img_url = img.find('img')['src']
+                            price = get_amazon_price(card)
+                            try:
+                                rnr = card.find('div', class_="a-row a-size-small")
+                                rating = rnr.find('span', class_='a-icon-alt').text
+                                review = rnr.find('span', class_='a-size-base').text
+                            except:
+                                pass
+                            for i in range(len(price)):
+                                main_count += 1
+                                href_list.append(href)
+                                product_dict.append(
+                                    [prod_name,  img_url, href,  rating, review, price[i],  country,  rmk])
+        except:
+            break
+        if len(href_list) != 0:
+            p = Pool(len(href_list))  # Pool tells how many at a time
+            records = p.map(get_amazon_ranking, href_list)
+            p.terminate()
+            p.join()
+            for i in range(len(href_list)):
+                product_dict[i].append(records[i])
+                product_dict[i].append(len(records[i]))
+                yield product_dict[i]
+            if count == 0:
+                exitloop = False
+            print(count, page)
+            page += 1
+        else:
+            exitloop = False   
 
 
 def get_flipkart_data(product_name):
