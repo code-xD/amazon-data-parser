@@ -4,4 +4,4 @@ code.*
 newtab.py
 *.pyc
 *.csv
-
+db.sqlite3
