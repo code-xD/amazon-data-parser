@@ -132,11 +132,11 @@ def get_amazon_data(product_name, country, category=None):
                     price = get_amazon_price(product)
                     try:
                         rnr = product.find('div', class_="a-row a-size-small")
-                        rating = rnr.find('span', class_='a-icon-alt').text
+                        rating = rnr.find('span', class_='a-icon-alt').text.split()[0]
                         review = rnr.find('span', class_='a-size-base').text
                     except:
                         pass
-                    rmk = ''
+                    rmk = None
                     try:
                         remarks = product.find_all('span', class_='a-badge-text')
                         for remark in remarks:
@@ -176,13 +176,15 @@ def get_amazon_data(product_name, country, category=None):
                             price = get_amazon_price(card)
                             try:
                                 rnr = card.find('div', class_="a-row a-size-small")
-                                rating = rnr.find('span', class_='a-icon-alt').text
+                                rating = rnr.find('span', class_='a-icon-alt').text.split()[0]
                                 review = rnr.find('span', class_='a-size-base').text
                             except:
                                 pass
                             for i in range(len(price)):
                                 main_count += 1
                                 href_list.append(href)
+                                if rmk is None or rmk.strip() == '':
+                                    rmk = 'None'
                                 product_dict.append(
                                     [prod_name,  img_url, href,  rating, review, price[i],  country,  rmk])
         except:
@@ -193,7 +195,10 @@ def get_amazon_data(product_name, country, category=None):
             p.terminate()
             p.join()
             for i in range(len(href_list)):
-                product_dict[i].append(records[i])
+                if records[i]!=[]:
+                    product_dict[i].append(int(''.join(min(records[i]).split(','))))
+                else:
+                    product_dict[i].append(0)
                 product_dict[i].append(len(records[i]))
                 yield product_dict[i]
             if count == 0:

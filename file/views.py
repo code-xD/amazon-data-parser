@@ -25,8 +25,10 @@ def printCSV(data):
             dataset = Dataset.objects.get(
                 name=data['Website'][0]+'-'+data['keyword'][0])
         else:
+            search_field = 'Amazon-'+data['keyword'][0] + \
+                '-'+data['Country'][0]+'-'+data['category'][0]
             dataset = Dataset.objects.get(
-                name='Amazon-'+data['keyword'][0]+'-'+data['country'][0]+'-'+data['category'][0])
+                name= search_field)
         rows = []
         fields = []
         # reading csv file
