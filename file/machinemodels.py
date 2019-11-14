@@ -183,7 +183,9 @@ def AlibabaCSVwriter(Product_name):
     path = join(settings.MEDIA_ROOT, 'scraped', f"{dataset.name}.csv")
     with open(path, 'w') as file:
         writer = csv.writer(file)
+        print("file")
         for data in get_alibaba_data(Product_name):
+            print("data",data)
             count+=1
             writer.writerow(data)
     f = open(path)

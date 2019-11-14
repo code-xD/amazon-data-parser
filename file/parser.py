@@ -310,42 +310,51 @@ def get_alibaba_data(product_name):
                 try:
                     img = product.find('img')  # title,https:+img_url
                     href = 'https:'+product.find('a')['href']
-                    price = product.find('div', class_='price').b.text
-                    price = price.replace(' ', '')
-                    price = price.replace('\n', '')
-                    lst = price.split('-')
-                    obj1=obj2=''
-                    for ch in lst[0]:
-                        if ch.isdigit() or ch == '.':
-                            obj1+=ch
-                    print(obj1)
-                    obj1 = float(obj1)
-                    for ch in lst[1]:
-                        if ch.isdigit() or ch == '.':
-                            obj2+=ch
-                    print(obj2)
-                    obj2 = float(obj2)
-                    price = (obj1+obj2)/2
-                    print(price)
+                    title = product.find(
+                        'p', class_="organic-gallery-title__content").text
+                    try:
+                        price = product.find('div', class_='organic-gallery-offer-section__price').p['title']
+                        print(price)
+                        price = price.replace(' ', '')
+                        price = price.replace('\n', '')
+                        lst = price.split('-')
+                        obj1=obj2=''
+                        for ch in lst[0]:
+                            if ch.isdigit() or ch == '.':
+                                obj1+=ch
+                        obj1 = float(obj1)
+                        for ch in lst[1]:
+                            if ch.isdigit() or ch == '.':
+                                obj2+=ch
+                        obj2 = float(obj2)
+                        price = (obj1+obj2)/2
+                        print("price",price)
+                    except Exception as e:
+                        price = 10000000000
+                        print(str(e))
                     rating = 0
                     responses = 0
+                    resp = 0
                     try:
-                        rating = product.find('span', class_='list-item__company-record-num').text
+                        rating = product.find(
+                            'span', class_='seb-supplier-review__score').text
                         rating = rating.replace(' ', '')
                         rating = rating.replace('\n', '')
                         rating = eval(rating)
                         responses = product.find(
-                            'span', class_='li-reviews-score__review-count').text
+                            'span', class_='seb-supplier-review__review-count').text
                         responses = responses.replace(' ', '')
                         responses = responses.replace('\n', '')
                         resp = ''
                         for ch in responses:
                             if ch.isdigit():
                                 resp += ch
-                        print(rating, resp)
+                        print("rnr",rating, resp)
                     except:
                         print('exception')
-                    yield [img['alt'], 'https:'+img['src'], href, rating, resp,  str(price), 'International']
+                    data = [title, 'https:'+img['src'], href, rating, resp,  str(price), 'International']
+                    print(data)
+                    yield data
                 except:
                     pass
         except:
