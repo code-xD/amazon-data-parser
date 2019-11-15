@@ -312,26 +312,22 @@ def get_alibaba_data(product_name):
                     href = 'https:'+product.find('a')['href']
                     title = product.find(
                         'p', class_="organic-gallery-title__content").text
-                    try:
-                        price = product.find('div', class_='organic-gallery-offer-section__price').p['title']
-                        print(price)
-                        price = price.replace(' ', '')
-                        price = price.replace('\n', '')
-                        lst = price.split('-')
-                        obj1=obj2=''
-                        for ch in lst[0]:
-                            if ch.isdigit() or ch == '.':
-                                obj1+=ch
-                        obj1 = float(obj1)
-                        for ch in lst[1]:
-                            if ch.isdigit() or ch == '.':
-                                obj2+=ch
-                        obj2 = float(obj2)
-                        price = (obj1+obj2)/2
-                        print("price",price)
-                    except Exception as e:
-                        price = 10000000000
-                        print(str(e))
+                    price = product.find('div', class_='organic-gallery-offer-section__price').p['title']
+                    print(price)
+                    price = price.replace(' ', '')
+                    price = price.replace('\n', '')
+                    lst = price.split('-')
+                    obj1=obj2=''
+                    for ch in lst[0]:
+                        if ch.isdigit() or ch == '.':
+                            obj1+=ch
+                    obj1 = float(obj1)
+                    for ch in lst[1]:
+                        if ch.isdigit() or ch == '.':
+                            obj2+=ch
+                    obj2 = float(obj2)
+                    price = (obj1+obj2)/2
+                    print("price",price)
                     rating = 0
                     responses = 0
                     resp = 0

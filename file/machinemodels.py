@@ -151,6 +151,8 @@ def EtsyCSVwriter(Product_name):
         writer = csv.writer(file)
         for data in get_etsy_data(Product_name):
             count+=1
+            if count > 300:
+                break
             writer.writerow(data)
     f = open(path)
     dataset.scraped_file = File(f)
@@ -187,6 +189,8 @@ def AlibabaCSVwriter(Product_name):
         for data in get_alibaba_data(Product_name):
             print("data",data)
             count+=1
+            if count > 300:
+                break
             writer.writerow(data)
     f = open(path)
     dataset.scraped_file = File(f)
@@ -226,6 +230,8 @@ def AmazonCSVwriter(Product_name ,Country ,Category=None):
         writer = csv.writer(file)
         for data in get_amazon_data(Product_name,Country,Category):
             count+=1
+            if count > 300:
+                break
             writer.writerow(data)
     f = open(path)
     dataset.scraped_file = File(f)
