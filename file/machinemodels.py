@@ -83,6 +83,7 @@ def outputlearner(dataset,count,org):
         y_N = y_N.round(0)
         y_N = y_N.astype(int)
         y_N = np.interp(y_N, (y_N.min(), y_N.max()), (+1, +20))
+        y_N = y_N.round(3)
         # Making & Sorting the final output file
         N.shape
         final = np.concatenate((N, y_N[:, None]), axis=1)
@@ -108,6 +109,7 @@ def outputlearner(dataset,count,org):
         y_N = y_N.round(0)
         y_N = y_N.astype(int)
         y_N = np.interp(y_N, (y_N.min(), y_N.max()), (+1, +20))
+        y_N = y_N.round(3)
         # Making & Sorting the final output file
         N.shape
         final = np.concatenate((N, y_N[:, None]), axis=1)
