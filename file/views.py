@@ -36,14 +36,13 @@ def printCSV(data):
             # creating a csv reader object
             csvreader = csv.reader(csvfile)
             fields = next(csvreader)
-            fields = [fields[0]]+fields[3:]
             # extracting each data row one by one
             count = 0
             for row in csvreader:
                 count += 1
                 if count > 200:
                     break
-                rows.append([row[0]]+row[3:])
+                rows.append(row)
         return {'fields':fields,'rows':rows}
     except:
         return None            
@@ -88,12 +87,11 @@ def viewCSV(request, data_name):
         # creating a csv reader object
         csvreader = csv.reader(csvfile)
         fields = next(csvreader)
-        fields = [fields[0]]+fields[2:]
         # extracting each data row one by one
         count = 0
         for row in csvreader:
             count += 1
             if count >100:
                 break
-            rows.append([row[0]]+row[2:])
+            rows.append(row)
     return render(request,'file/viewfile.html',{'rows':rows,'fields':fields})
